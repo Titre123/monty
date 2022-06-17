@@ -1,11 +1,18 @@
-#ifndef MONTY_H
-#define MONTY_H
+#ifndef _MONTY_H_
+#define _MONTY_H_
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <ctype.h>
+
+#define DELIMITER " \n\t\a"
+#define LIFO 1
+#define FIFO 0
 
 /**
  * struct stack_s - doubly linked list representation of a stack (or queue)
@@ -38,98 +45,97 @@ typedef struct instruction_s
 } instruction_t;
 
 /**
- * struct args_s - structure of arguments from main
- * @av: name of the file from the command line
- * @ac: number of arguments from main
- * @line_number: number of the current line in the file
- *
- * Description: arguments passed to main from the command line
- * used in different functions, organized in a struct for clarity
+ * struct info_s - Data From The Monty File
+ * @cmd: Line From File
+ * @arg: Argument To Excute
+ * @l_number: Line Number
+ * @fp: File Descriptor
+ * @fn: File Name
+ * @type: FIFO LIFO
+ * Description: Information About The Commands In The Monty File
  */
-typedef struct args_s
+typedef struct info_s
 {
-	char *av;
-	int ac;
-	unsigned int line_number;
-} args_t;
-
+	char *cmd;
+	char **arg;
+	char *fn;
+	int l_number;
+	FILE *fp;
+	int type;
+} info_t;
+extern info_t info;
 /**
- * struct data_s - extern data to access inside functions
- * @line: line from the file
- * @words: parsed line
- * @stack: pointer to the stack
- * @fptr: file pointer
- * @qflag: flag for queue or stack
+ * struct error - print error to stderr
+ * @out:error code
+ * @error_type:function to handle error
  */
-typedef struct data_s
+typedef struct error
 {
-	char *line;
-	char **words;
-	stack_t *stack;
-	FILE *fptr;
-	int qflag;
-} data_t;
+	int out;
+	void (*error_type)(void);
+} error_t;
 
-typedef stack_t dlistint_t;
+/********* Error-Handler**********/
 
-extern data_t data;
+void handle_error(int code);
+void malloc_fail(void);
+void monty_usage(void);
+void push_use(void);
+void unknown_command(void);
+void file_perm(void);
+void pint_error(void);
+void pop_error(void);
+void swap_error(void);
+void add_error(void);
+void sub_error(void);
+void div_error(void);
+void _zero(void);
+void mul_error(void);
+void mod_error(void);
+void pchar_error(void);
+void pchar_error_2(void);
 
-#define DATA_INIT {NULL, NULL, NULL, NULL, 0}
 
-#define USAGE "USAGE: monty file\n"
-#define FILE_ERROR "Error: Can't open file %s\n"
-#define UNKNOWN "L%u: unknown instruction %s\n"
-#define MALLOC_FAIL "Error: malloc failed\n"
-#define PUSH_FAIL "L%u: usage: push integer\n"
-#define PINT_FAIL "L%u: can't pint, stack empty\n"
-#define POP_FAIL "L%u: can't pop an empty stack\n"
-#define SWAP_FAIL "L%u: can't swap, stack too short\n"
-#define ADD_FAIL "L%u: can't add, stack too short\n"
-#define SUB_FAIL "L%u: can't sub, stack too short\n"
-#define DIV_FAIL "L%u: can't div, stack too short\n"
-#define DIV_ZERO "L%u: division by zero\n"
-#define MUL_FAIL "L%u: can't mul, stack too short\n"
-#define MOD_FAIL "L%u: can't mod, stack too short\n"
-#define PCHAR_FAIL "L%u: can't pchar, stack empty\n"
-#define PCHAR_RANGE "L%u: can't pchar, value out of range\n"
 
-/* main.c */
-void monty(args_t *args);
 
-/* get_func.c */
-void (*get_func(char **parsed))(stack_t **, unsigned int);
-void push_handler(stack_t **stack, unsigned int line_number);
-void pall_handler(stack_t **stack, unsigned int line_number);
+/****** Engine *****/
 
-/* handler_funcs1.c */
-void pint_handler(stack_t **stack, unsigned int line_number);
-void pop_handler(stack_t **stack, unsigned int line_number);
-void swap_handler(stack_t **stack, unsigned int line_number);
-void add_handler(stack_t **stack, unsigned int line_number);
-void nop_handler(stack_t **stack, unsigned int line_number);
+int treat_monty(char *filename);
+int split(void);
+int excute_monty(stack_t **stack);
 
-/* handler_funcs2.c */
-void sub_handler(stack_t **stack, unsigned int line_number);
-void div_handler(stack_t **stack, unsigned int line_number);
-void mul_handler(stack_t **stack, unsigned int line_number);
-void mod_handler(stack_t **stack, unsigned int line_number);
+/***** Monty-Command******/
 
-/* handler_funcs3.c */
-void rotl_handler(stack_t **stack, unsigned int line_number);
-void rotr_handler(stack_t **stack, unsigned int line_number);
-void stack_handler(stack_t **stack, unsigned int line_number);
-void queue_handler(stack_t **stack, unsigned int line_number);
+void push_monty(stack_t **stack, unsigned int line_number);
+void pall_monty(stack_t **stack, unsigned int line_number);
+void pint_monty(stack_t **stack, unsigned int line_number);
+void pop_monty(stack_t **stack, unsigned int line_number);
+void swap_monty(stack_t **stack, unsigned int line_number);
+void add_monty(stack_t **stack, unsigned int line_number);
+void nop_monty(stack_t **stack, unsigned int line_number);
+void sub_monty(stack_t **stack, unsigned int line_number);
+void div_monty(stack_t **stack, unsigned int line_number);
+void mul_monty(stack_t **stack, unsigned int line_number);
+void mod_monty(stack_t **stack, unsigned int line_number);
+void pchar_monty(stack_t **stack, unsigned int line_number);
+void pstr_monty(stack_t **stack, unsigned int line_number);
+void rotr_monty(stack_t **stack, unsigned int line_number);
+void rotl_monty(stack_t **stack, unsigned int line_number);
+void _queue(stack_t **stack, unsigned int line_number);
+void _stack(stack_t **stack, unsigned int line_number);
 
-/* char.c */
-void pchar_handler(stack_t **stack, unsigned int line_number);
-void pstr_handler(stack_t **stack, unsigned int line_number);
 
-/* strtow.c */
-int count_word(char *s);
-char **strtow(char *str);
-void free_everything(char **args);
+/****** Helpers *********/
 
-/* free.c */
-void free_all(int all);
+void free_info(void);
+void free_list(stack_t *stack);
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+char *_memcpy(char *dest, char *src, unsigned int n);
+void *fill_an_array(void *a, int el, unsigned int len);
+int _isdigit(char *str);
+int dlistint_len(stack_t *stack);
+int delete_dnodeint_at_index(stack_t **head, int index);
+void add_node_fifo(stack_t **stack, stack_t *new_node);
+void add_node_lifo(stack_t **stack, stack_t *new_node);
 
 #endif
